@@ -1,4 +1,5 @@
 resources:
-# - config-krules-subjects-redis.yaml
+ - config-krules-subjects-redis.yaml
+ - service-account.yaml
 # - config-krules-subjects-mongodb.yaml
 
