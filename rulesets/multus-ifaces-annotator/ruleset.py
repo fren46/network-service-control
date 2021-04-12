@@ -55,10 +55,38 @@ rulesdata = [
                 ),
             ],
             processing: [
+                PPrint("____________ sono nella add/update ____________"),
                 SetMultusInterfaces(),
-                # PPrint(
-                #     lambda payload: subject_factory(f"service:{payload['metadata']['name']}").get
-                # ),
+                PPrint(
+                    lambda payload: subject_factory(f"service:{payload['metadata']['name']}").get_ext_props()
+                ),
+            ]
+        }
+    },
+
+    {
+        rulename: "delete-subject-multus-interface",
+        subscribe_to: [
+            "dev.knative.apiserver.resource.delete",
+        ],
+        ruledata: {
+            filters: [
+                Filter(
+                    lambda payload:
+                    "k8s.v1.cni.cncf.io/networks" in payload.get("metadata").get("annotations", {}) and
+                    "k8s.v1.cni.cncf.io/networks-status" in payload.get("metadata").get("annotations", {})
+                ),
+            ],
+            processing: [
+                PPrint("____________ sono nella delete ____________"),
+                DeleteMultusAnnotation(),
+                # Process(lambda  payload: (
+                #     subject_factory(f"service:{payload['metadata']['name']}").delete_ext("multusapp")
+                # )),
+                 PPrint(
+                     lambda payload: subject_factory(f"service:{payload['metadata']['name']}").get_ext_props()
+                 ),
+
             ]
         }
     },

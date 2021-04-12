@@ -96,7 +96,7 @@ rulesdata = [
     """,
     {
         rulename: "on-firewall-creation",
-        subscribe_to: ["subject-property-changed"],
+        subscribe_to: ["subject-property-changed", "subject-property-deleted"],
         ruledata: {
             filters: [],
             processing: [

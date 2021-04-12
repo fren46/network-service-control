@@ -33,3 +33,13 @@ class SetMultusInterfaces(RuleFunctionBase):
                     subject.set(status.get("name"), status, use_cache=False)
                     print(subject.get(status.get("name")))
                     break
+
+
+class DeleteMultusAnnotation(RuleFunctionBase):
+
+    def execute(self):
+        subject = subject_factory(
+            f"service:{self.payload['metadata']['name']}"
+        )
+        subject.delete_ext("multusapp", True)
+        print("--> appena cancellata la proprietà")
