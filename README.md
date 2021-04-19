@@ -1,4 +1,4 @@
-#Dynamic VNF Management in Kubernetes
+# Dynamic VNF Management in Kubernetes
 
 This repo is a practical example of solution found by me during my thesis work and explained in [this Medium article](https://medium.com/@francesco.valente95/dynamic-vnf-management-in-kubernetes-892f66fbd2e).
 Check out the article to get more information about the work.
