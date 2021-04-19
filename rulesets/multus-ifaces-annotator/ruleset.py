@@ -38,7 +38,9 @@ class PPrint(RuleFunctionBase):
 
 rulesdata = [
     """
-    
+    filter resources with multus network annotations
+    set annotations properties with interfaces name and IPs 
+    set extended property of resources
     """,
     {
         rulename: "set-subject-multus-interface",
@@ -55,15 +57,15 @@ rulesdata = [
                 ),
             ],
             processing: [
-                PPrint("____________ sono nella add/update ____________"),
                 SetMultusInterfaces(),
-                PPrint(
-                    lambda payload: subject_factory(f"service:{payload['metadata']['name']}").get_ext_props()
-                ),
             ]
         }
     },
 
+    """
+    filter deletion of resources with multus network annotations
+    generate an event with type "fw-delete"
+    """,
     {
         rulename: "delete-subject-multus-interface",
         subscribe_to: [
@@ -78,18 +80,9 @@ rulesdata = [
                 ),
             ],
             processing: [
-                PPrint("____________ sono nella delete ____________"),
-                DeleteMultusAnnotation(),
-                # Process(lambda  payload: (
-                #     subject_factory(f"service:{payload['metadata']['name']}").delete_ext("multusapp")
-                # )),
-                 PPrint(
-                     lambda payload: subject_factory(f"service:{payload['metadata']['name']}").get_ext_props()
-                 ),
-
+                Route("fw-delete", lambda payload: f"service:{payload['metadata']['name']}", {}),
             ]
         }
     },
-
 ]
 

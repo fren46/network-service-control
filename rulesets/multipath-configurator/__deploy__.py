@@ -26,15 +26,22 @@ service_account = "demo-serviceaccount"
 triggers = (
    {
        "name": "on-multus-app-change",
-       # broker: "my-broker",
        "filter": {
            "attributes": {
                "type": "subject-property-changed",
                "multusapp": "firewall",
-               # ...
            }
        }
    },
+   {
+       "name": "on-fw-delete",
+       "filter": {
+           "attributes": {
+               "type": "fw-delete",
+               "multusapp": "firewall",
+           }
+       }
+   }
 )
 triggers_default_broker = "default"
 

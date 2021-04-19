@@ -1,0 +1,52 @@
+rulesdata = [
+    {
+        rulename: "intercept_FW_creation",
+        subscribe_to: ["dev.knative.apiserver.resource.update"],
+        ruledata: {
+            filters: [
+                Filter(
+                    lambda payload:(
+                        "firewall" in payload.get("metadata").get("labels", "").get("vnf-app", ""),
+                        "Running" in payload.get("status", {}).get("phase", "")
+                    )
+                ),
+            ],
+            processing: [
+                Process(
+                    lambda payload: 
+                        subject_factory(f"pod:firewall:{payload['metadata']['name']}")
+                            .set("status", "Running")
+                ),
+            ]
+        }
+    },
+    {
+        rulename: "on-fw-running-invoke-lb-config",
+        subscribe_to: "subject-property-changed",
+        ruledata: {
+            filters: [
+                SubjectNameMatch("^pod:firewall:.*"),
+                OnSubjectPropertyChanged(
+                    property_name="status",
+                    value="Running",
+                    old_value=None,
+                )
+            ],
+            processing: [
+                K8sObjectsQuery(
+                    apiversion="v1",
+                    kind="Pod",
+                    selector={
+                        "vnf-app": "Loadbalancer",
+                    },
+                    foreach=lambda payload: lambda obj: (
+                        modify_lb_config(obj,
+                                         payload["subnet"],
+                                         payload["fw_ips"])
+                    )
+                ),
+
+            ]
+        }
+    }
+]

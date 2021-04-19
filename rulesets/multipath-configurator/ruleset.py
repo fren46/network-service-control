@@ -41,22 +41,11 @@ LB_FW_NETWORK = "default/lb-fw-macvlan-conf"
 FW_SV_NETWORK = "default/fw-sv-macvlan-conf"
 
 
-def set_subnet_in_payload(obj, name, payload):
-    '''
-    if the NetworkAttachmentDefinition passed as parameter has the same name of the one
-    passed as second parameter, it's added the network IP to payload
-    :param obj: NetworkAttachmentDefinition get by the K8sObjectsQuery
-    :param name: the name of the subnet that interest us
-    :param payload: payload of the context firewall
-    :return: None
-    '''
-    if obj["metadata"]["name"] == name:
-        payload["subnet"] = json.loads(obj["spec"]["config"])["ipam"]["subnet"]
-
-
 def set_running_fws_in_payload(obj, payload):
-    '''
-    '''
+    """
+    Set ip address of the LB_FW_NETWORK interface of the FW passed as first parameter
+    in the payload passed as second parameter.
+    """
     subject = subject_factory(f"service:{obj['metadata']['name']}")
     try:
         if subject.get_ext("multusapp"):
@@ -67,14 +56,14 @@ def set_running_fws_in_payload(obj, payload):
 
 
 def add_fw_to_lb(ob, dest_net_subnet, fw_ips):
-    '''
-    modify the routing table of the pod passed as first parameter using the
+    """
+    Modify the routing table of the pod passed as first parameter using the
     destination network "dest_net_subnet" and the IPs of the FW "fw_ips".
     :param ob: multipath-router get by K8sObjectQuery
     :param dest_net_subnet: ip with subnetmask of the destination network
     :param fw_ips: list of the approved FW
     :return: None
-    '''
+    """
     command = [
         '/bin/sh',
         '-c',
@@ -93,25 +82,22 @@ def add_fw_to_lb(ob, dest_net_subnet, fw_ips):
 
 rulesdata = [
     """
+    change the LoadBalancer configuration when a Firewall is created or deleted
     """,
     {
         rulename: "on-firewall-creation",
-        subscribe_to: ["subject-property-changed", "subject-property-deleted"],
+        subscribe_to: ["subject-property-changed", "fw-delete"],
         ruledata: {
-            filters: [],
             processing: [
-                PPrint("###################### sono dentro ###############################"),
+                # set the network ip in payload if the NetworkAttachmentDefinition name is "fw-sv-macvlan-conf"
                 K8sObjectsQuery(
                     apiversion="k8s.cni.cncf.io/v1",
                     kind="NetworkAttachmentDefinition",
                     foreach=lambda payload: lambda obj:
                         obj.obj["metadata"]["name"] == "fw-sv-macvlan-conf" and
                         payload.setdefault("subnet", json.loads(obj.obj["spec"]["config"])["ipam"]["subnet"])
-                        #set_subnet_in_payload(obj.obj, "fw-sv-macvlan-conf", payload),
                 ),
-                PPrint("###################### 1 payload ##############################"),
-                PPrint(lambda payload: payload),
-                #set firewall name in payload
+                # set firewall name in payload
                 K8sObjectsQuery(
                     apiversion="v1",
                     kind="Pod",
@@ -121,9 +107,7 @@ rulesdata = [
                         "multus-app": "firewall",
                     },
                 ),
-                PPrint("###################### 2 payload #############################"),
-                PPrint(lambda payload: payload),
-                #configure multipath route
+                # configure multipath route
                 K8sObjectsQuery(
                     apiversion="v1",
                     kind="Pod",
@@ -139,5 +123,17 @@ rulesdata = [
             ]
         }
     },
+    """
+    Delete the subject
+    """,
+    {
+        rulename: "on-firewall-deletion",
+        subscribe_to: ["fw-delete"],
+        ruledata: {
+            processing: [
+                FlushSubject()
+            ]
+        }
+    }
 ]
 

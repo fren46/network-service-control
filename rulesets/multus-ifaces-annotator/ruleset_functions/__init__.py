@@ -27,19 +27,5 @@ class SetMultusInterfaces(RuleFunctionBase):
         for interface in interfaces:
             for status in statuses:
                 if status.get("name") == interface:
-                    print("sono dentro")
-                    #self.payload[status["interface"]] = status["ips"][0]
-                    #self.subject.set(status.pop("name"), status)
                     subject.set(status.get("name"), status, use_cache=False)
-                    print(subject.get(status.get("name")))
                     break
-
-
-class DeleteMultusAnnotation(RuleFunctionBase):
-
-    def execute(self):
-        subject = subject_factory(
-            f"service:{self.payload['metadata']['name']}"
-        )
-        subject.delete_ext("multusapp", True)
-        print("--> appena cancellata la proprietà")

@@ -1,0 +1,29 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  namespace: default
+  labels:
+    multus-app: client
+spec:
+  selector:
+    matchLabels:
+      multus-app: client
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        multus-app: client
+      annotations:
+        k8s.v1.cni.cncf.io/networks: default/cl-lb-macvlan-conf
+    spec:
+      containers:
+      - name: client
+        image: fvalente95/curl-and-iproute2
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN"]
+        command: ['/bin/sh', '-c', 'sleep infinity']
+      terminationGracePeriodSeconds: 0
+
